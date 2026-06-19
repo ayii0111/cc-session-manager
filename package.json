@@ -1,0 +1,32 @@
+{
+  "name": "ccs",
+  "version": "1.0.0",
+  "description": "Claude Code Session manager",
+  "main": "dist/index.js",
+  "bin": { "ccs": "./dist/index.js" },
+  "scripts": {
+    "build": "tsup",
+    "deploy": "tsup && node scripts/deploy.js",
+    "setup": "tsup && node scripts/setup.js",
+    "dev": "tsx src/index.ts",
+    "start": "node dist/index.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "packageManager": "pnpm@10.33.0",
+  "dependencies": {
+    "chalk": "^4.1.2",
+    "cli-cursor": "^3.1.0",
+    "inquirer": "^8.2.7",
+    "inquirer-tree-prompt": "^1.1.2",
+    "rxjs": "^7.8.2"
+  },
+  "devDependencies": {
+    "@types/inquirer": "^9.0.10",
+    "@types/node": "^25.9.3",
+    "tsup": "^8.5.1",
+    "tsx": "^4.22.4",
+    "typescript": "^6.0.3"
+  }
+}
