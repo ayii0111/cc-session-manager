@@ -69,6 +69,14 @@ function parseJsonLines(content: string): any[] {
     .filter(x => x !== null);
 }
 
+/** Prefer the latest custom title (user rename), then the latest aiTitle. */
+function findTitle(reversedLines: any[]): string | undefined {
+  return (
+    reversedLines.find(l => l.type === 'custom-title' && l.customTitle)?.customTitle ??
+    reversedLines.find(l => l.type === 'ai-title' && l.aiTitle)?.aiTitle
+  );
+}
+
 export async function parseSessionFile(
   filePath: string,
   cc_project_dir: string
@@ -88,9 +96,7 @@ export async function parseSessionFile(
       const original_project_dir: string =
         cwdLine?.cwd ?? slugToPath(path.basename(cc_project_dir));
 
-      const customTitleEntry = reversedLines.find(l => l.type === 'custom-title' && l.customTitle);
-      const aiTitleEntry = allLines.find(l => l.type === 'ai-title' && l.aiTitle);
-      const session_name: string = sanitizeName(customTitleEntry?.customTitle ?? aiTitleEntry?.aiTitle ?? '(untitled)');
+      const session_name = sanitizeName(findTitle(reversedLines) ?? '(untitled)');
 
       const lastTimeLine = reversedLines.find(l => l.timestamp);
       const lastTime: string = lastTimeLine?.timestamp ?? stat.mtime.toISOString();
@@ -123,17 +129,23 @@ export async function parseSessionFile(
         reversedTail.find(l => l.cwd)?.cwd ?? slugToPath(path.basename(cc_project_dir));
     }
 
-    const customTitleInTail = reversedTail.find(l => l.type === 'custom-title' && l.customTitle);
-
-    let session_name: string;
-    if (customTitleInTail) {
-      session_name = sanitizeName(customTitleInTail.customTitle);
-    } else {
-      // aiTitle is auto-generated near the beginning
-      const headForTitle = await readHead(filePath, 16384);
-      const aiTitleEntry = parseJsonLines(headForTitle).find(l => l.type === 'ai-title' && l.aiTitle);
-      session_name = sanitizeName(aiTitleEntry?.aiTitle ?? '(untitled)');
+    // CC re-appends title entries throughout the session, so the tail usually has
+    // one; widen the tail window progressively since recent CC versions write
+    // very large lines (prompt snapshots, request shapes) between them.
+    let title = findTitle(reversedTail);
+    for (const chunkSize of [65536, 262144]) {
+      if (title || chunkSize >= fileSize) break;
+      title = findTitle(parseJsonLines(await readTail(filePath, chunkSize)).reverse());
     }
+    // Last resort: the first aiTitle may sit far past the head of the file
+    // behind those same large lines.
+    for (const chunkSize of [16384, 262144]) {
+      if (title) break;
+      const aiTitleEntry = parseJsonLines(await readHead(filePath, chunkSize))
+        .find(l => l.type === 'ai-title' && l.aiTitle);
+      title = aiTitleEntry?.aiTitle;
+    }
+    const session_name = sanitizeName(title ?? '(untitled)');
 
     const lastTimeLine = reversedTail.find(l => l.timestamp);
     const lastTime: string = lastTimeLine?.timestamp ?? stat.mtime.toISOString();
