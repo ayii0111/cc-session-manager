@@ -61,7 +61,15 @@ function rebuildAllNames(cloneTree: any[], activeSet: Set<string>): void {
   }
 }
 
-function buildTree(projectsWithSessions: Awaited<ReturnType<typeof getProjectsWithSessions>>, activeSet: Set<string>) {
+type ProjectList = Awaited<ReturnType<typeof getProjectsWithSessions>>;
+
+/** The current directory's project goes first; the rest keep their recency order. */
+function currentProjectFirst(projects: ProjectList): ProjectList {
+  const isCurrent = (p: ProjectList[number]) => p.project.original_project_dir === process.cwd();
+  return [...projects.filter(isCurrent), ...projects.filter(p => !isCurrent(p))];
+}
+
+function buildTree(projectsWithSessions: ProjectList, activeSet: Set<string>) {
   const dirMeta = projectsWithSessions.map(({ project, sessions }) => {
     const dirName = project.original_project_dir
       ? path.basename(project.original_project_dir)
@@ -124,7 +132,7 @@ async function main() {
       return;
     }
 
-    const tree = buildTree(projectsWithSessions, watcher.getActive());
+    const tree = buildTree(currentProjectFirst(projectsWithSessions), watcher.getActive());
     const opLogs: string[] = [];
     const addLog = (msg: string) => {
       opLogs.push(chalk.dim(msg));

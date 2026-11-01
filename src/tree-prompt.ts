@@ -72,9 +72,6 @@ class TwoPhaseTreePrompt extends TreePrompt {
     this._inputLabel = '';
     this._inputDefault = '';
     this._inputHandler = null;
-    // Start on the project opened by default, otherwise it may sit off-page.
-    // Must use the library's clone: later reference checks compare against it.
-    this.active = ((this.tree as any).children as any[]).find((d: any) => d.open);
   }
 
   getQuestion(): string {
