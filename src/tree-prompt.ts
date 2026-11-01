@@ -55,6 +55,8 @@ class TwoPhaseTreePrompt extends TreePrompt {
   _inputLabel: string;
   _inputDefault: string;
   _inputHandler: ((ch: any, key: any) => void) | null;
+  /** shownList index behind each list row currently on screen. */
+  _visibleItems: number[];
 
   constructor(questions: any, rl: any, answers: any) {
     super(questions, rl, answers);
@@ -72,6 +74,7 @@ class TwoPhaseTreePrompt extends TreePrompt {
     this._inputLabel = '';
     this._inputDefault = '';
     this._inputHandler = null;
+    this._visibleItems = [];
   }
 
   getQuestion(): string {
@@ -369,24 +372,37 @@ class TwoPhaseTreePrompt extends TreePrompt {
     this.screen.render(message, error ? chalk.red('>> ') + error : undefined);
   }
 
-  /** The visible page of the tree, ending in `...` only when items remain below it. */
+  /**
+   * The visible page of the tree, then a divider as its lower boundary. A list
+   * longer than pageSize always fills exactly pageSize rows, so the divider never
+   * moves: `...` takes the last row while items remain below it. Done here rather
+   * than with inquirer's Paginator, which can't give up a row to the `...`.
+   */
   _treePage(): string {
+    // One column short of full width: a full-width line can wrap in some terminals.
+    const divider = chalk.dim('─'.repeat(Math.max(0, this.screen.normalizedCliWidth() - 1)));
     this.shownList = [];
-    const content = this.createTreeContent();
-    const active = this.shownList.indexOf(this.active);
-    const pageSize = this.opt.pageSize as number;
-    const page: string = this.paginator.paginate(content, active, pageSize);
-    if (page === content) return page; // everything fits
+    // The final newline would count as a row; color codes can follow it when the
+    // last row is focused.
+    // eslint-disable-next-line no-control-regex
+    const content = this.createTreeContent().replace(/\n(?:\x1b\[\d+m)*$/, '');
 
-    // Mirrors Paginator.getFiniteLines, counting wrapped rows like it does.
     const wrapped: string[][] = this.screen.breakLines(content.split('\n'));
-    const lineCount = wrapped.flat().length; // includes the trailing empty line
-    const activeLine = wrapped.slice(0, active).reduce((sum, rows) => sum + rows.length, 0);
-    const top = Math.trunc(Math.max(0, Math.min(activeLine - pageSize / 2, lineCount - pageSize)));
-    const hasMoreBelow = top + pageSize < lineCount - 1;
+    const lines = wrapped.flat();
+    const lineItems = wrapped.flatMap((rows, item) => rows.map(() => item));
 
-    const rows = page.split('\n').slice(0, -1); // drop the paginator's own hint line
-    return rows.join('\n') + '\n' + (hasMoreBelow ? chalk.dim('  ...') : '');
+    const pageSize = this.opt.pageSize as number;
+    const activeLine = lineItems.indexOf(this.shownList.indexOf(this.active));
+    const top = Math.max(0, Math.min(activeLine - Math.floor(pageSize / 2), lines.length - pageSize));
+    const hasMoreBelow = top + pageSize < lines.length;
+    const end = top + (hasMoreBelow ? pageSize - 1 : pageSize);
+
+    this._visibleItems = lineItems.slice(top, end);
+    return [
+      ...lines.slice(top, end),
+      ...(hasMoreBelow ? [chalk.dim('  ...')] : []),
+      divider,
+    ].join('\n');
   }
 
   _renderWithInput(): void {
@@ -410,16 +426,6 @@ class TwoPhaseTreePrompt extends TreePrompt {
     this.screen.render(message, error ? chalk.red('>> ') + error : undefined);
   }
 
-  /** Index of the first visible item; mirrors inquirer Paginator.getFiniteLines. */
-  _visibleTopIndex(): number {
-    const pageSize = this.opt.pageSize as number;
-    const lineCount = this.shownList.length + 1; // tree content ends with a newline
-    if (lineCount <= pageSize) return 0;
-    const top = this.shownList.indexOf(this.active) - pageSize / 2;
-    if (top < 0) return 0;
-    return Math.trunc(Math.min(top, lineCount - pageSize));
-  }
-
   _setupMouseListener(): void {
     this._mouseHandler = (data: Buffer) => {
       if (this.phase !== 'tree') return;
@@ -432,9 +438,9 @@ class TwoPhaseTreePrompt extends TreePrompt {
       const isPress = match[4] === 'M';
 
       if (button === 0 && isPress) {
-        const visibleRow = clickRow - this._promptStartRow - 1;
-        const itemIndex = visibleRow + this._visibleTopIndex();
-        if (visibleRow >= 0 && visibleRow < this.opt.pageSize && itemIndex < this.shownList.length) {
+        // Undefined outside the list rows, which includes the `...` and the divider.
+        const itemIndex = this._visibleItems[clickRow - this._promptStartRow - 1];
+        if (itemIndex !== undefined) {
           this.active = this.shownList[itemIndex];
           this.render();
         }
