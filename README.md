@@ -1,4 +1,4 @@
-# ccs — Claude Code Session manager
+# Claude Code Session manager
 
 一個 TUI 工具，用來管理 [Claude Code](https://claude.com/claude-code) 的會話 (session)。
 在終端機裡瀏覽、切換、重命名、刪除各專案的 cc sessions，選定後直接接續對話，**離開時自動 `cd` 回該專案目錄**。
@@ -23,7 +23,7 @@ pnpm run setup   # build + 安裝指令 + 詢問是否寫入 ~/.zshrc shell 整�
 ```
 
 `setup` 會：
-1. 把工具裝到 `~/.local/share/ccs/`，並在 `~/.local/bin/ccs` 建立指令
+1. 把工具裝到 `~/.local/share/sm/`，並在 `~/.local/bin/sm` 建立指令
 2. 詢問是否在 `~/.zshrc` 加入 shell 整合函式（讓退出後能自動 `cd`）
 
 完成後執行 `source ~/.zshrc` 或重開終端機即可生效。
@@ -35,7 +35,7 @@ pnpm run setup   # build + 安裝指令 + 詢問是否寫入 ~/.zshrc shell 整�
 啟動：
 
 ```shell
-ccs
+sm
 ```
 
 | 按鍵 | 動作 |
@@ -61,7 +61,7 @@ ccs
 
 - **Sessions 來源**：`~/.claude/projects/[slug]/*.jsonl` — 每個 `.jsonl` 是一段 cc 對話紀錄，從中解析名稱、原始專案路徑 (`cwd`)、時間戳
 - **活躍偵測**：掃描 `~/.claude/sessions/[pid].json`，並用 `process.kill(pid, 0)` 驗證進程仍存活（避免 cc 崩潰後的殘留 PID 誤判）
-- **自動 cd**：`ccs` 離開前把目標目錄寫入 `/tmp/ccs-cwd`，`~/.zshrc` 的 wrapper 函式讀取後執行 `cd`。
+- **自動 cd**：`sm` 離開前把目標目錄寫入 `/tmp/sm-cwd`，`~/.zshrc` 的 wrapper 函式讀取後執行 `cd`。
   （`cd` 無法由子進程改變父 shell 的目錄，因此必須靠 shell 函式橋接）
 
 ## 開發

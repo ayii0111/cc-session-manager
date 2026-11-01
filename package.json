@@ -1,9 +1,9 @@
 {
-  "name": "ccs",
+  "name": "sm",
   "version": "1.0.0",
   "description": "Claude Code Session manager",
   "main": "dist/index.js",
-  "bin": { "ccs": "./dist/index.js" },
+  "bin": { "sm": "./dist/index.js" },
   "scripts": {
     "build": "tsup",
     "deploy": "tsup && node scripts/deploy.js",

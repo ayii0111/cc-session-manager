@@ -3,7 +3,7 @@ import * as fs from 'fs';
 import * as fsp from 'fs/promises';
 import * as path from 'path';
 
-const CWD_FILE = '/tmp/ccs-cwd';
+const CWD_FILE = '/tmp/sm-cwd';
 
 function writeCwd(dir: string): void {
   try { fs.writeFileSync(CWD_FILE, dir); } catch { /* ignore */ }

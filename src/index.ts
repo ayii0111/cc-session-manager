@@ -104,7 +104,7 @@ function buildTree(projectsWithSessions: Awaited<ReturnType<typeof getProjectsWi
 
 async function main() {
   // Clear stale cwd file from previous run so ESC-exit doesn't trigger cd
-  try { require('fs').unlinkSync('/tmp/ccs-cwd'); } catch {}
+  try { require('fs').unlinkSync('/tmp/sm-cwd'); } catch {}
 
   inquirer.registerPrompt('two-phase-tree', TwoPhaseTreePrompt);
 

@@ -8,23 +8,23 @@ const { execSync } = require('child_process');
 const os = require('os');
 
 const HOME = os.homedir();
-const SHARE_DIR = path.join(HOME, '.local', 'share', 'ccs');
+const SHARE_DIR = path.join(HOME, '.local', 'share', 'sm');
 const BIN_DIR = path.join(HOME, '.local', 'bin');
-const BIN_PATH = path.join(BIN_DIR, 'ccs');
+const BIN_PATH = path.join(BIN_DIR, 'sm');
 const DIST_SRC = path.join(__dirname, '..', 'dist', 'index.js');
-const DIST_DEST = path.join(SHARE_DIR, 'ccs.js');
+const DIST_DEST = path.join(SHARE_DIR, 'sm.js');
 const ZSHRC = path.join(HOME, '.zshrc');
-const MARKER = '# ccs shell integration';
+const MARKER = '# sm shell integration';
 
 const WRAPPER = `
 ${MARKER}
-ccs() {
-  rm -f /tmp/ccs-cwd
-  command ccs "$@"
+sm() {
+  rm -f /tmp/sm-cwd
+  command sm "$@"
   local __d
-  __d=$(cat /tmp/ccs-cwd 2>/dev/null)
+  __d=$(cat /tmp/sm-cwd 2>/dev/null)
   [ -n "$__d" ] && cd "$__d"
-  rm -f /tmp/ccs-cwd
+  rm -f /tmp/sm-cwd
 }
 `;
 
@@ -79,7 +79,7 @@ async function askWrapper() {
 }
 
 async function main() {
-  console.log('🔧 CCS Setup\n');
+  console.log('🔧 sm Setup\n');
 
   if (!fs.existsSync(DIST_SRC)) {
     console.error('✗ dist/index.js 不存在，請先執行 pnpm build');
@@ -91,11 +91,11 @@ async function main() {
 
   const pathDirs = (process.env.PATH || '').split(path.delimiter);
   if (!pathDirs.includes(BIN_DIR)) {
-    console.log(`\n⚠️  ${BIN_DIR} 不在 PATH 中，ccs 指令可能無法直接使用。`);
+    console.log(`\n⚠️  ${BIN_DIR} 不在 PATH 中，sm 指令可能無法直接使用。`);
     console.log(`   請將以下加入 ~/.zshrc：export PATH="${BIN_DIR}:$PATH"`);
   }
 
-  console.log('\n✅ 完成！現在可以用 ccs 指令啟動工具。');
+  console.log('\n✅ 完成！現在可以用 sm 指令啟動工具。');
 }
 
 main().catch((err) => { console.error(err); process.exit(1); });

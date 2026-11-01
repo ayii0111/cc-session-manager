@@ -6,11 +6,11 @@ const path = require('path');
 const os = require('os');
 
 const HOME = os.homedir();
-const SHARE_DIR = path.join(HOME, '.local', 'share', 'ccs');
+const SHARE_DIR = path.join(HOME, '.local', 'share', 'sm');
 const BIN_DIR = path.join(HOME, '.local', 'bin');
-const BIN_PATH = path.join(BIN_DIR, 'ccs');
+const BIN_PATH = path.join(BIN_DIR, 'sm');
 const DIST_SRC = path.join(__dirname, '..', 'dist', 'index.js');
-const DIST_DEST = path.join(SHARE_DIR, 'ccs.js');
+const DIST_DEST = path.join(SHARE_DIR, 'sm.js');
 
 function ensureDir(dir) {
   if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
