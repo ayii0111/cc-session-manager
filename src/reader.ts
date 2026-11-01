@@ -92,16 +92,16 @@ export async function parseSessionFile(
       const allLines = parseJsonLines(content);
       const reversedLines = [...allLines].reverse();
 
-      const cwdLine = allLines.find(l => l.cwd);
-      const original_project_dir: string =
-        cwdLine?.cwd ?? slugToPath(path.basename(cc_project_dir));
+      const realCwd: string | undefined = allLines.find(l => l.cwd)?.cwd;
+      const cwd_inferred = !realCwd;
+      const original_project_dir = realCwd ?? slugToPath(path.basename(cc_project_dir));
 
       const session_name = sanitizeName(findTitle(reversedLines) ?? '(untitled)');
 
       const lastTimeLine = reversedLines.find(l => l.timestamp);
       const lastTime: string = lastTimeLine?.timestamp ?? stat.mtime.toISOString();
 
-      return { cc_project_dir, original_project_dir, session_name, session_id, lastTime, fileSize };
+      return { cc_project_dir, original_project_dir, cwd_inferred, session_name, session_id, lastTime, fileSize };
     }
 
     // Large files: targeted head + tail reads
@@ -124,9 +124,11 @@ export async function parseSessionFile(
 
     // Fallback for a huge first message (> 32KB): any tail line carries cwd too.
     // Last resort: reverse-engineer from the slug so the session still shows.
+    let cwd_inferred = false;
     if (!original_project_dir) {
-      original_project_dir =
-        reversedTail.find(l => l.cwd)?.cwd ?? slugToPath(path.basename(cc_project_dir));
+      const tailCwd: string | undefined = reversedTail.find(l => l.cwd)?.cwd;
+      cwd_inferred = !tailCwd;
+      original_project_dir = tailCwd ?? slugToPath(path.basename(cc_project_dir));
     }
 
     // CC re-appends title entries throughout the session, so the tail usually has
@@ -150,7 +152,7 @@ export async function parseSessionFile(
     const lastTimeLine = reversedTail.find(l => l.timestamp);
     const lastTime: string = lastTimeLine?.timestamp ?? stat.mtime.toISOString();
 
-    return { cc_project_dir, original_project_dir, session_name, session_id, lastTime, fileSize };
+    return { cc_project_dir, original_project_dir, cwd_inferred, session_name, session_id, lastTime, fileSize };
   } catch {
     return null;
   }
@@ -185,10 +187,19 @@ export async function getProjectsWithSessions(): Promise<ProjectWithSessions[]> 
       const cc_project_dir = path.join(CC_PROJECTS_DIR, e.name);
       const sessions = await getSessions(cc_project_dir);
       if (sessions.length === 0) return;
+
+      // Sessions are newest-first. Only fall back to the slug if none has a real cwd.
+      const realCwdSession = sessions.find(s => !s.cwd_inferred);
+      const original_project_dir = (realCwdSession ?? sessions[0]).original_project_dir;
+      for (const s of sessions) {
+        if (s.cwd_inferred) s.original_project_dir = original_project_dir;
+      }
+
       results.push({
         project: {
           cc_project_dir,
-          original_project_dir: sessions[0].original_project_dir,
+          original_project_dir,
+          path_inferred: !realCwdSession,
         },
         sessions,
         latestSessionTime: sessions[0].lastTime,

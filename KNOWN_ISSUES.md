@@ -30,6 +30,9 @@ clone tree 為空，用戶不知道需要按 Esc 退出。
 ### 安裝完成後 `~/.local/bin` 可能不在 PATH
 **已修**：`install.sh` 寫入的 shell 整合區塊會在 `~/.local/bin` 不在 `PATH` 時自動加入。
 
+### 最新 session 沒有 cwd 時，專案名稱與路徑取錯（如 `server-mode` 顯示成 `mode`）
+**已修**：專案路徑改為遍歷所有 session，取最新一個帶真實 `cwd` 的值，沒有 `cwd` 的 session 也沿用它。全部 session 都沒有 `cwd` 才用 `slugToPath()` 反推，並在名稱後標註「（反推名稱）」以便發現錯誤。
+
 ## 待處理
 
 ### 終端機太窄時欄位換行破版

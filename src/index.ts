@@ -6,7 +6,13 @@ import { getProjectsWithSessions } from './reader';
 import { ActiveSessionWatcher } from './watcher';
 import * as ops from './operations';
 import { formatRelativeTime, formatFileSize, visibleWidth } from './format';
-import type { SessionInfo, TreeNodeValue } from './types';
+import type { ProjectInfo, SessionInfo, TreeNodeValue } from './types';
+
+/** Flags names derived from the lossy slug so a wrong one is easy to spot. */
+function projectDirName(project: ProjectInfo): string {
+  const name = path.basename(project.original_project_dir || project.cc_project_dir);
+  return project.path_inferred ? `${name}（反推名稱）` : name;
+}
 
 function buildSessionLine(session: SessionInfo, isActive: boolean, maxNameW: number, maxSizeW: number): string {
   const namePad = ' '.repeat(Math.max(0, maxNameW - visibleWidth(session.session_name)));
@@ -31,10 +37,7 @@ function rebuildDirChildren(dirNode: any, activeSet: Set<string>): void {
 }
 
 function buildDirLine(dirNode: any, activeSet: Set<string>, maxDirPrefixW: number): string {
-  const { project } = dirNode.value;
-  const dirName = project.original_project_dir
-    ? path.basename(project.original_project_dir)
-    : path.basename(project.cc_project_dir);
+  const dirName = projectDirName(dirNode.value.project);
   const sessions: SessionInfo[] = (dirNode.children ?? []).map((c: any) => c.value.session);
   const countStr = `(${sessions.length})`;
   const prefixPlain = `${dirName} ${countStr}`;
@@ -49,10 +52,7 @@ function buildDirLine(dirNode: any, activeSet: Set<string>, maxDirPrefixW: numbe
 
 function rebuildAllNames(cloneTree: any[], activeSet: Set<string>): void {
   const maxDirPrefixW = cloneTree.reduce((m, d) => {
-    const { project } = d.value;
-    const dirName = project.original_project_dir
-      ? path.basename(project.original_project_dir)
-      : path.basename(project.cc_project_dir);
+    const dirName = projectDirName(d.value.project);
     return Math.max(m, visibleWidth(`${dirName} (${d.children?.length ?? 0})`));
   }, 0);
   for (const dirNode of cloneTree) {
@@ -71,9 +71,7 @@ function currentProjectFirst(projects: ProjectList): ProjectList {
 
 function buildTree(projectsWithSessions: ProjectList, activeSet: Set<string>) {
   const dirMeta = projectsWithSessions.map(({ project, sessions }) => {
-    const dirName = project.original_project_dir
-      ? path.basename(project.original_project_dir)
-      : path.basename(project.cc_project_dir);
+    const dirName = projectDirName(project);
     const countStr = `(${sessions.length})`;
     return { dirName, countStr, prefixPlain: `${dirName} ${countStr}` };
   });
@@ -193,13 +191,13 @@ async function main() {
           addLog(`session "${deletedName}" 已刪除`);
 
         } else if (action === '刪除所有 sessions' && nodeVal.type === 'dir') {
-          const dirName = path.basename(nodeVal.project.original_project_dir || nodeVal.project.cc_project_dir);
+          const dirName = projectDirName(nodeVal.project);
           await ops.deleteAllSessions(nodeVal.project.cc_project_dir);
           treeData.splice(treeData.indexOf(treeNode), 1);
           addLog(`"${dirName}" 所有 sessions 已刪除`);
 
         } else if (action === '刪除目錄 (含 memory)' && nodeVal.type === 'dir') {
-          const dirName = path.basename(nodeVal.project.original_project_dir || nodeVal.project.cc_project_dir);
+          const dirName = projectDirName(nodeVal.project);
           await ops.deleteDirectory(nodeVal.project.cc_project_dir);
           treeData.splice(treeData.indexOf(treeNode), 1);
           addLog(`"${dirName}" 目錄已刪除`);
