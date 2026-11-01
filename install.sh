@@ -54,9 +54,16 @@ download_release() {
   [ -s "$1" ] || fail '下載到的打包檔是空的'
 }
 
+# $ZDOTDIR may be a terminal's temporary integration dir (e.g. Terax), so ask a
+# clean zsh, which only sees the value the user set in ~/.zshenv.
+find_zsh_rc() {
+  zsh_dir=$(env -u ZDOTDIR zsh -c 'printf %s "${ZDOTDIR:-$HOME}"' </dev/null 2>/dev/null | tail -n 1 || true)
+  echo "${zsh_dir:-$HOME}/.zshrc"
+}
+
 find_shell_rc() {
   case "$(basename "${SHELL:-}")" in
-    zsh) echo "${ZDOTDIR:-$HOME}/.zshrc" ;;
+    zsh) find_zsh_rc ;;
     bash) echo "$HOME/.bashrc" ;;
   esac
 }

@@ -27,6 +27,12 @@ remove_files() {
   rm -f /tmp/sm-cwd
 }
 
+# Must match install.sh: $ZDOTDIR may be a terminal's temporary integration dir.
+find_zsh_rc() {
+  zsh_dir=$(env -u ZDOTDIR zsh -c 'printf %s "${ZDOTDIR:-$HOME}"' </dev/null 2>/dev/null | tail -n 1 || true)
+  echo "${zsh_dir:-$HOME}/.zshrc"
+}
+
 remove_shell_block() {
   [ -f "$1" ] || return 0
   grep -qxF "$BLOCK_START" "$1" || return 0
@@ -49,7 +55,7 @@ remove_shell_block() {
 main() {
   remove_bin
   remove_files
-  remove_shell_block "${ZDOTDIR:-$HOME}/.zshrc"
+  remove_shell_block "$(find_zsh_rc)"
   remove_shell_block "$HOME/.bashrc"
   echo '✅ 已移除 sm；已開啟的終端機需重開，才會清掉載入中的 sm 函式'
 }
