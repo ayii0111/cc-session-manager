@@ -365,30 +365,33 @@ class TwoPhaseTreePrompt extends TreePrompt {
       return;
     }
 
-    let treeContent = this.createTreeContent();
-    if (this.opt.loop !== false) {
-      treeContent += '----------------';
-    }
-    message += '\n' + this.paginator.paginate(
-      treeContent,
-      this.shownList.indexOf(this.active),
-      this.opt.pageSize
-    );
+    message += '\n' + this._treePage();
     this.screen.render(message, error ? chalk.red('>> ') + error : undefined);
+  }
+
+  /** The visible page of the tree, ending in `...` only when items remain below it. */
+  _treePage(): string {
+    this.shownList = [];
+    const content = this.createTreeContent();
+    const active = this.shownList.indexOf(this.active);
+    const pageSize = this.opt.pageSize as number;
+    const page: string = this.paginator.paginate(content, active, pageSize);
+    if (page === content) return page; // everything fits
+
+    // Mirrors Paginator.getFiniteLines, counting wrapped rows like it does.
+    const wrapped: string[][] = this.screen.breakLines(content.split('\n'));
+    const lineCount = wrapped.flat().length; // includes the trailing empty line
+    const activeLine = wrapped.slice(0, active).reduce((sum, rows) => sum + rows.length, 0);
+    const top = Math.trunc(Math.max(0, Math.min(activeLine - pageSize / 2, lineCount - pageSize)));
+    const hasMoreBelow = top + pageSize < lineCount - 1;
+
+    const rows = page.split('\n').slice(0, -1); // drop the paginator's own hint line
+    return rows.join('\n') + '\n' + (hasMoreBelow ? chalk.dim('  ...') : '');
   }
 
   _renderWithInput(): void {
     let message = this.getQuestion();
-    this.shownList = [];
-    let treeContent = this.createTreeContent();
-    if (this.opt.loop !== false) {
-      treeContent += '----------------';
-    }
-    message += '\n' + this.paginator.paginate(
-      treeContent,
-      this.shownList.indexOf(this.active),
-      this.opt.pageSize
-    );
+    message += '\n' + this._treePage();
     const cursor = chalk.bgWhite.black(' ');
     message += `\n\n  ${this._inputLabel}${chalk.cyan(this._inputBuffer)}${cursor}`;
     this.screen.render(message);
@@ -396,17 +399,7 @@ class TwoPhaseTreePrompt extends TreePrompt {
 
   _renderWithActionBar(error?: any): void {
     let message = this.getQuestion();
-
-    this.shownList = [];
-    let treeContent = this.createTreeContent();
-    if (this.opt.loop !== false) {
-      treeContent += '----------------';
-    }
-    message += '\n' + this.paginator.paginate(
-      treeContent,
-      this.shownList.indexOf(this.active),
-      this.opt.pageSize
-    );
+    message += '\n' + this._treePage();
 
     message += '\n\n  操作：' + this.currentActions.map((action, i) => {
       return i === this.activeAction
