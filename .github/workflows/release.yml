@@ -1,0 +1,26 @@
+# Push a `v*` tag to publish the bundle that install.sh downloads.
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run build
+      - run: cp dist/index.js sm.js
+      - run: gh release create "$GITHUB_REF_NAME" sm.js --generate-notes
+        env:
+          GH_TOKEN: ${{ github.token }}

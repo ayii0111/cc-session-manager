@@ -15,20 +15,25 @@
 
 ## 安裝
 
-需要 [pnpm](https://pnpm.io/)。下載後在專案目錄執行：
+需要 Node.js 18 以上。
 
 ```shell
-pnpm install
-pnpm run setup   # build + 安裝指令 + 詢問是否寫入 ~/.zshrc shell 整合
+curl -fsSL https://raw.githubusercontent.com/ayii0111/cc-session-manager/main/install.sh | sh
 ```
 
-`setup` 會：
+安裝程式會：
 1. 把工具裝到 `~/.local/share/sm/`，並在 `~/.local/bin/sm` 建立指令
-2. 詢問是否在 `~/.zshrc` 加入 shell 整合函式（讓退出後能自動 `cd`）
+2. 在 `~/.zshrc` 或 `~/.bashrc` 加入 shell 整合區塊（讓退出後能自動 `cd`，並確保 `~/.local/bin` 在 `PATH` 中）
 
-完成後執行 `source ~/.zshrc` 或重開終端機即可生效。
+完成後重開終端機即可生效。
 
-> 若提示 `~/.local/bin` 不在 `PATH`，依畫面指示把它加入 `~/.zshrc` 即可。
+## 移除
+
+```shell
+curl -fsSL https://raw.githubusercontent.com/ayii0111/cc-session-manager/main/uninstall.sh | sh
+```
+
+會移除指令、安裝檔與 shell 整合區塊，不會動到 `~/.claude` 內的 session 資料。
 
 ## 使用
 
@@ -61,7 +66,7 @@ sm
 
 - **Sessions 來源**：`~/.claude/projects/[slug]/*.jsonl` — 每個 `.jsonl` 是一段 cc 對話紀錄，從中解析名稱、原始專案路徑 (`cwd`)、時間戳
 - **活躍偵測**：掃描 `~/.claude/sessions/[pid].json`，並用 `process.kill(pid, 0)` 驗證進程仍存活（避免 cc 崩潰後的殘留 PID 誤判）
-- **自動 cd**：`sm` 離開前把目標目錄寫入 `/tmp/sm-cwd`，`~/.zshrc` 的 wrapper 函式讀取後執行 `cd`。
+- **自動 cd**：`sm` 離開前把目標目錄寫入 `/tmp/sm-cwd`，shell 設定檔裡的 wrapper 函式讀取後執行 `cd`。
   （`cd` 無法由子進程改變父 shell 的目錄，因此必須靠 shell 函式橋接）
 
 ## 開發
@@ -69,9 +74,11 @@ sm
 ```shell
 pnpm dev          # 用 tsx 直接執行，免 build
 pnpm build        # 用 tsup 打包到 dist/index.js
-pnpm run deploy   # build + 部署（代碼更新後用，不動 .zshrc）
+pnpm run reinstall  # 以當前原始碼重新安裝（先移除再安裝）
 pnpm start        # 執行 dist/index.js
 ```
+
+推送 `v*` tag 會由 GitHub Actions 建立 Release 並附上打包檔，`curl` 安裝下載的就是最新 Release。
 
 原始碼結構與架構說明見 [`CLAUDE.md`](./CLAUDE.md)，開發者安裝流程見 [`INSTALL.md`](./INSTALL.md)。
 

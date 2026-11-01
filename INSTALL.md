@@ -1,9 +1,10 @@
 
 開發者：
 - pnpm install
-- pnpm run setup  # build + 複製 + .zshrc 詢問
-- pnpm run deploy  # 代碼更改後 (build + 複製，不問 .zshrc)
+- pnpm run reinstall  # 代碼更改後：一鍵移除 + 從當前原始碼一鍵安裝
 
 一般安裝者：
-- pnpm install
-- pnpm run setup
+- curl -fsSL https://raw.githubusercontent.com/ayii0111/cc-session-manager/main/install.sh | sh
+
+移除：
+- curl -fsSL https://raw.githubusercontent.com/ayii0111/cc-session-manager/main/uninstall.sh | sh

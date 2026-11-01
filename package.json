@@ -6,8 +6,7 @@
   "bin": { "sm": "./dist/index.js" },
   "scripts": {
     "build": "tsup",
-    "deploy": "tsup && node scripts/deploy.js",
-    "setup": "tsup && node scripts/setup.js",
+    "reinstall": "tsup && sh uninstall.sh && sh install.sh",
     "dev": "tsx src/index.ts",
     "start": "node dist/index.js"
   },

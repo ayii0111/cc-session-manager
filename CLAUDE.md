@@ -11,12 +11,17 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ```bash
 pnpm dev          # 直接用 tsx 執行（開發用，無需先 build）
 pnpm build        # 用 tsup 打包到 dist/index.js
-pnpm run deploy   # build + 複製到 ~/.local/share/sm/ + 建立 symlink（代碼更新後用）
-pnpm run setup    # build + deploy + 詢問是否寫入 ~/.zshrc shell 整合（初次安裝用）
+pnpm run reinstall # 先打包確認能建置，再一鍵移除 + 從當前原始碼一鍵安裝
 pnpm start        # 執行 dist/index.js
+sh install.sh     # 一鍵安裝（repo 內執行時用當前原始碼；curl | sh 時下載 Release 打包檔）
+sh uninstall.sh   # 一鍵移除（指令、安裝檔、shell 整合區塊；不動 ~/.claude）
 ```
 
 沒有測試套件。
+
+## 開發流程
+
+改完原始碼後，一律執行 `pnpm run reinstall`（先一鍵移除、再一鍵安裝）讓工具實裝新狀態，不要手動複製檔案或另外部署。
 
 ## 架構
 
@@ -56,7 +61,9 @@ tree phase → (Enter) → action phase → (Enter on confirm-required action) �
 dist/index.js → ~/.local/share/sm/sm.js → symlink: ~/.local/bin/sm
 ```
 
-zsh wrapper（由 `pnpm setup` 寫入 `~/.zshrc`）攔截 `sm` 指令，在執行後讀取 `/tmp/sm-cwd` 並執行 `cd`。
+shell wrapper（由 `install.sh` 以 `# >>> sm shell integration >>>` 標記的區塊寫入 `~/.zshrc` 或 `~/.bashrc`，`uninstall.sh` 依標記移除）攔截 `sm` 指令，在執行後讀取 `/tmp/sm-cwd` 並執行 `cd`。
+
+推送 `v*` tag 時，`.github/workflows/release.yml` 會建立 GitHub Release 並附上 `sm.js`，供 `curl | sh` 安裝下載。
 
 ## 已知重要問題
 

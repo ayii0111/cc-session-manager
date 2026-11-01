@@ -27,8 +27,8 @@ clone tree 為空，用戶不知道需要按 Esc 退出。
 ### Session 名稱含 ANSI escape sequence 可能干擾顯示
 **已修**：`src/reader.ts` 新增 `sanitizeName()`，讀取時剝除 ANSI escape 與控制字元，清空後 fallback 為 `(untitled)`。
 
-### `pnpm run setup` 完成後沒有警告 `~/.local/bin` 是否在 PATH
-**已修**：`scripts/setup.js` 結尾檢查 `BIN_DIR` 是否在 `PATH`，不在則印出 export 提示。
+### 安裝完成後 `~/.local/bin` 可能不在 PATH
+**已修**：`install.sh` 寫入的 shell 整合區塊會在 `~/.local/bin` 不在 `PATH` 時自動加入。
 
 ## 待處理
 
