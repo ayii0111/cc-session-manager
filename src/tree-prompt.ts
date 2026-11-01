@@ -90,6 +90,16 @@ class TwoPhaseTreePrompt extends TreePrompt {
     return node?.children ? ['操作1', '操作2'] : ['操作A', '操作B'];
   }
 
+  // Wrap at both ends. Not using the library's `loop` option because that also
+  // switches the paginator to infinite mode, which repeats the list on screen.
+  moveActive(distance = 0): void {
+    const count = this.shownList.length;
+    if (count === 0) return;
+    const index = this.shownList.indexOf(this.active) + distance;
+    this.active = this.shownList[(index + count) % count];
+    this.render();
+  }
+
   async _run(done: (result: any) => void): Promise<any> {
     process.stdout.write('\x1b[?1000h\x1b[?1006h');
     this._promptStartRow = await this._queryCursorRow();
