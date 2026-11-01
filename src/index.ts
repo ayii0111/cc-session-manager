@@ -96,7 +96,7 @@ function buildTree(projectsWithSessions: Awaited<ReturnType<typeof getProjectsWi
     return {
       name: dirNodeName,
       value: { type: 'dir', project } as TreeNodeValue,
-      open: false,
+      open: project.original_project_dir === process.cwd(),
       children,
     };
   });

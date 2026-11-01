@@ -72,6 +72,9 @@ class TwoPhaseTreePrompt extends TreePrompt {
     this._inputLabel = '';
     this._inputDefault = '';
     this._inputHandler = null;
+    // Start on the project opened by default, otherwise it may sit off-page.
+    // Must use the library's clone: later reference checks compare against it.
+    this.active = ((this.tree as any).children as any[]).find((d: any) => d.open);
   }
 
   getQuestion(): string {
@@ -407,6 +410,16 @@ class TwoPhaseTreePrompt extends TreePrompt {
     this.screen.render(message, error ? chalk.red('>> ') + error : undefined);
   }
 
+  /** Index of the first visible item; mirrors inquirer Paginator.getFiniteLines. */
+  _visibleTopIndex(): number {
+    const pageSize = this.opt.pageSize as number;
+    const lineCount = this.shownList.length + 1; // tree content ends with a newline
+    if (lineCount <= pageSize) return 0;
+    const top = this.shownList.indexOf(this.active) - pageSize / 2;
+    if (top < 0) return 0;
+    return Math.trunc(Math.min(top, lineCount - pageSize));
+  }
+
   _setupMouseListener(): void {
     this._mouseHandler = (data: Buffer) => {
       if (this.phase !== 'tree') return;
@@ -419,8 +432,9 @@ class TwoPhaseTreePrompt extends TreePrompt {
       const isPress = match[4] === 'M';
 
       if (button === 0 && isPress) {
-        const itemIndex = clickRow - this._promptStartRow - 1;
-        if (itemIndex >= 0 && itemIndex < this.shownList.length) {
+        const visibleRow = clickRow - this._promptStartRow - 1;
+        const itemIndex = visibleRow + this._visibleTopIndex();
+        if (visibleRow >= 0 && visibleRow < this.opt.pageSize && itemIndex < this.shownList.length) {
           this.active = this.shownList[itemIndex];
           this.render();
         }
