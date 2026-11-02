@@ -1,7 +1,7 @@
-export function formatRelativeTime(isoTimestamp: string): string {
+export function formatRelativeTime(isoTimestamp: string, now: number): string {
   if (!isoTimestamp) return '';
 
-  const diff = Date.now() - new Date(isoTimestamp).getTime();
+  const diff = now - new Date(isoTimestamp).getTime();
   const totalSec = Math.floor(diff / 1000);
   const totalMin = Math.floor(totalSec / 60);
   const totalHr = Math.floor(totalMin / 60);

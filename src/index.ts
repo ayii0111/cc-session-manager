@@ -8,6 +8,9 @@ import * as ops from './operations';
 import { formatRelativeTime, formatFileSize, visibleWidth } from './format';
 import type { ProjectInfo, SessionInfo, TreeNodeValue } from './types';
 
+/** Relative times are measured from launch, so they don't change while sm stays open. */
+const LAUNCHED_AT = Date.now();
+
 /** Flags names derived from the lossy slug so a wrong one is easy to spot. */
 function projectDirName(project: ProjectInfo): string {
   const name = path.basename(project.original_project_dir || project.cc_project_dir);
@@ -27,7 +30,7 @@ function buildSessionLine(session: SessionInfo, isActive: boolean, maxNameW: num
     chalk.dim('·') + ' ' +
     session.session_name + namePad +
     '  ' + sizePad + chalk.cyan(sizePlain) +
-    '  ' + chalk.dim(formatRelativeTime(session.lastTime)) +
+    '  ' + chalk.dim(formatRelativeTime(session.lastTime, LAUNCHED_AT)) +
     (isActive ? '  ' + chalk.green('●') : '')
   );
 }
@@ -51,7 +54,7 @@ function buildDirLine(dirNode: any, activeSet: Set<string>, maxDirPrefixW: numbe
   const hasActive = sessions.some(s => activeSet.has(s.session_id));
   return dirName +
     ' ' + chalk.gray(countStr) +
-    dirPad + '  ' + chalk.dim(formatRelativeTime(latestTime)) +
+    dirPad + '  ' + chalk.dim(formatRelativeTime(latestTime, LAUNCHED_AT)) +
     dirStatusMarks(dirNode.value.project, hasActive);
 }
 
@@ -93,7 +96,7 @@ function buildTree(projectsWithSessions: ProjectList, activeSet: Set<string>) {
     const dirNodeName =
       dirName +
       ' ' + chalk.gray(countStr) +
-      dirPad + '  ' + chalk.dim(formatRelativeTime(latestTime)) +
+      dirPad + '  ' + chalk.dim(formatRelativeTime(latestTime, LAUNCHED_AT)) +
       dirStatusMarks(project, hasActive);
 
     const maxNameW = sessions.reduce((m, s) => Math.max(m, visibleWidth(s.session_name)), 0);

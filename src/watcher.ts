@@ -34,18 +34,22 @@ export class ActiveSessionWatcher {
     await this._scan();
 
     try {
-      this.watcher = fs.watch(CC_SESSIONS_DIR, async () => {
-        await this._scan();
-        this.onUpdate(this.activeSet);
-      });
+      this.watcher = fs.watch(CC_SESSIONS_DIR, () => this._refresh());
       this.watcher.on('error', () => {});
     } catch {
     }
 
-    this.fallbackTimer = setInterval(async () => {
-      await this._scan();
-      this.onUpdate(this.activeSet);
-    }, 3000);
+    this.fallbackTimer = setInterval(() => this._refresh(), 3000);
+  }
+
+  /** Notify only when the active set changed: each update redraws the whole list. */
+  private async _refresh(): Promise<void> {
+    const previous = this.activeSet;
+    await this._scan();
+    const current = this.activeSet;
+    if (current.size !== previous.size || [...current].some((id) => !previous.has(id))) {
+      this.onUpdate(current);
+    }
   }
 
   private async _scan(): Promise<void> {
