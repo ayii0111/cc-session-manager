@@ -10,6 +10,8 @@ export interface SessionInfo {
   original_project_dir: string;
   /** This session's file has no cwd (e.g. opened and left without any message). */
   cwd_inferred: boolean;
+  /** original_project_dir encodes to this session's project dir slug, so `claude -r` can find it from there. */
+  cwd_matched: boolean;
   session_name: string;
   session_id: string;
   lastTime: string;

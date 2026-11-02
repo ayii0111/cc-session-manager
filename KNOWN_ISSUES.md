@@ -33,6 +33,11 @@ clone tree 為空，用戶不知道需要按 Esc 退出。
 ### 最新 session 沒有 cwd 時，專案名稱與路徑取錯（如 `server-mode` 顯示成 `mode`）
 **已修**：專案路徑改為遍歷所有 session，取最新一個帶真實 `cwd` 的值，沒有 `cwd` 的 session 也沿用它。全部 session 都沒有 `cwd` 才用 `slugToPath()` 反推，並在名稱後標註「（反推名稱）」以便發現錯誤。
 
+### session 中途換過目錄時，回到會話失敗（`spawn claude ENOENT`）
+`src/reader.ts` 取檔案開頭的 `cwd`，若該目錄已刪除，`spawn` 會回報看似找不到指令的 `ENOENT`，shell wrapper 的 `cd` 也跟著失敗。
+
+**已修**：改取轉成 slug 後與所在專案資料夾相符的 `cwd`；該 session 找不到時沿用同專案其他 session 的相符目錄。啟動前也會確認目錄存在，不存在就顯示明確訊息，且不寫入 `/tmp/sm-cwd`。
+
 ## 待處理
 
 ### 終端機太窄時欄位換行破版

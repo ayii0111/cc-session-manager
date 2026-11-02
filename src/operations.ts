@@ -10,6 +10,11 @@ function writeCwd(dir: string): void {
 }
 
 function spawnAndHint(args: string[], cwd: string): void {
+  // Node reports a missing cwd as `spawn claude ENOENT`, which reads like claude isn't installed.
+  if (!fs.statSync(cwd, { throwIfNoEntry: false })?.isDirectory()) {
+    console.error(`無法啟動 claude，目錄已不存在：${cwd}`);
+    return;
+  }
   writeCwd(cwd);
   const child = spawn('claude', args, { cwd, stdio: 'inherit' });
   child.on('error', (err) => {
