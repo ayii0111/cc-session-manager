@@ -14,6 +14,11 @@ function projectDirName(project: ProjectInfo): string {
   return project.path_inferred ? `${name}（反推名稱）` : name;
 }
 
+function dirStatusMarks(project: ProjectInfo, hasActive: boolean): string {
+  return (hasActive ? '  ' + chalk.green('●') : '') +
+    (project.path_missing ? '  ' + chalk.yellow('! 原路徑不存在') : '');
+}
+
 function buildSessionLine(session: SessionInfo, isActive: boolean, maxNameW: number, maxSizeW: number): string {
   const namePad = ' '.repeat(Math.max(0, maxNameW - visibleWidth(session.session_name)));
   const sizePlain = formatFileSize(session.fileSize);
@@ -47,7 +52,7 @@ function buildDirLine(dirNode: any, activeSet: Set<string>, maxDirPrefixW: numbe
   return dirName +
     ' ' + chalk.gray(countStr) +
     dirPad + '  ' + chalk.dim(formatRelativeTime(latestTime)) +
-    (hasActive ? '  ' + chalk.green('●') : '');
+    dirStatusMarks(dirNode.value.project, hasActive);
 }
 
 function rebuildAllNames(cloneTree: any[], activeSet: Set<string>): void {
@@ -89,7 +94,7 @@ function buildTree(projectsWithSessions: ProjectList, activeSet: Set<string>) {
       dirName +
       ' ' + chalk.gray(countStr) +
       dirPad + '  ' + chalk.dim(formatRelativeTime(latestTime)) +
-      (hasActive ? '  ' + chalk.green('●') : '');
+      dirStatusMarks(project, hasActive);
 
     const maxNameW = sessions.reduce((m, s) => Math.max(m, visibleWidth(s.session_name)), 0);
     const maxSizeW = sessions.reduce((m, s) => Math.max(m, formatFileSize(s.fileSize).length), 0);

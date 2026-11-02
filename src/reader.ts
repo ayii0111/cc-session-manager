@@ -214,11 +214,14 @@ export async function getProjectsWithSessions(): Promise<ProjectWithSessions[]> 
         }
       }
 
+      const path_missing = !(await fs.stat(original_project_dir).catch(() => null))?.isDirectory();
+
       results.push({
         project: {
           cc_project_dir,
           original_project_dir,
           path_inferred: !realCwdSession,
+          path_missing,
         },
         sessions,
         latestSessionTime: sessions[0].lastTime,

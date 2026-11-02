@@ -36,7 +36,7 @@ clone tree 為空，用戶不知道需要按 Esc 退出。
 ### session 中途換過目錄時，回到會話失敗（`spawn claude ENOENT`）
 `src/reader.ts` 取檔案開頭的 `cwd`，若該目錄已刪除，`spawn` 會回報看似找不到指令的 `ENOENT`，shell wrapper 的 `cd` 也跟著失敗。
 
-**已修**：改取轉成 slug 後與所在專案資料夾相符的 `cwd`；該 session 找不到時沿用同專案其他 session 的相符目錄。啟動前也會確認目錄存在，不存在就顯示明確訊息，且不寫入 `/tmp/sm-cwd`。
+**已修**：改取轉成 slug 後與所在專案資料夾相符的 `cwd`；該 session 找不到時沿用同專案其他 session 的相符目錄。啟動前也會確認目錄存在；不存在時不寫入 `/tmp/sm-cwd`，列表會在該專案標示黃色的「! 原路徑不存在」；回到會話會先提醒用 `/cd` 搬移 session，按 Enter 後才在當前目錄直接執行 `claude -r <session_id>`；開新 session 則顯示明確訊息並中止。
 
 ## 待處理
 

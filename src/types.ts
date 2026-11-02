@@ -3,6 +3,8 @@ export interface ProjectInfo {
   original_project_dir: string;
   /** No session in this project has a real cwd, so the path came from the lossy slug. */
   path_inferred: boolean;
+  /** original_project_dir no longer exists on disk (checked when the list loads). */
+  path_missing: boolean;
 }
 
 export interface SessionInfo {
