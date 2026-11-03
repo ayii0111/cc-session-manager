@@ -39,6 +39,7 @@ import cliCursor from 'cli-cursor';
 import { fromEvent } from 'rxjs';
 import { filter, share } from 'rxjs/operators';
 import observe = require('inquirer/lib/utils/events');
+import { OverwriteScreenManager } from './screen';
 
 class TwoPhaseTreePrompt extends TreePrompt {
   _promptStartRow: number;
@@ -60,6 +61,7 @@ class TwoPhaseTreePrompt extends TreePrompt {
 
   constructor(questions: any, rl: any, answers: any) {
     super(questions, rl, answers);
+    this.screen = new OverwriteScreenManager(this.rl);
     this._promptStartRow = 0;
     this._mouseHandler = null;
     this._actionKeyHandler = null;
@@ -241,6 +243,8 @@ class TwoPhaseTreePrompt extends TreePrompt {
         // Save adjacent info for cursor restoration after delete (reference equality works on clone)
         const parentDir = cloneTree.find((d: any) => d.children?.includes(activeNode));
         const siblingIdx = parentDir ? (parentDir.children as any[]).indexOf(activeNode) : -1;
+        // Top-level index of the dir being acted on (the node itself, or its parent dir)
+        const topIdx = cloneTree.indexOf(parentDir ?? activeNode);
         // Detach action handlers, return to tree phase before async op
         if (this._actionKeyHandler) { process.stdin.removeListener('keypress', this._actionKeyHandler); this._actionKeyHandler = null; }
         if (this._escHandler) { process.stdin.removeListener('data', this._escHandler); this._escHandler = null; }
@@ -248,11 +252,18 @@ class TwoPhaseTreePrompt extends TreePrompt {
         this.phase = 'tree';
         onAction(pending, activeNode, cloneTree).then(() => {
           // Restore cursor using clone tree (same references)
-          if (parentDir && cloneTree.includes(parentDir) && parentDir.children?.length > 0) {
+          const stillExists = parentDir
+            ? parentDir.children?.includes(activeNode) && cloneTree.includes(parentDir)
+            : cloneTree.includes(activeNode);
+          if (stillExists) {
+            this.active = activeNode; // operation failed / no-op: keep focus
+          } else if (parentDir && cloneTree.includes(parentDir) && parentDir.children?.length > 0) {
             const idx = siblingIdx >= 0 ? Math.min(siblingIdx, parentDir.children.length - 1) : 0;
             this.active = parentDir.children[idx];
           } else if (cloneTree.length > 0) {
-            this.active = cloneTree[0];
+            // Deleted dir (or its last session): focus the next dir, or the last one if it was last
+            const idx = topIdx >= 0 ? Math.min(topIdx, cloneTree.length - 1) : 0;
+            this.active = cloneTree[idx];
           }
           this.render();
         }).catch(() => this.render());
