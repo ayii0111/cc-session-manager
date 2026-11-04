@@ -80,10 +80,14 @@ class TwoPhaseTreePrompt extends TreePrompt {
   }
 
   getQuestion(): string {
+    return chalk.bold((this.opt as any).message || '') + ' ';
+  }
+
+  /** Operation logs, placed at the very bottom so new entries never shift the list. */
+  _logSection(gap = false): string {
     const getLogs = (this.opt as any).getLogs as (() => string[]) | undefined;
     const logs = getLogs?.() ?? [];
-    const logSection = logs.length ? logs.join('\n') + '\n\n' : '';
-    return logSection + chalk.bold((this.opt as any).message || '') + ' ';
+    return logs.length ? (gap ? '\n\n' : '\n') + logs.join('\n') : '';
   }
 
   _getActionsForNode(node: any): string[] {
@@ -375,11 +379,13 @@ class TwoPhaseTreePrompt extends TreePrompt {
     const children = (this.tree as any).children as any[] | undefined;
     if (!children || children.length === 0) {
       message += '\n' + chalk.dim('  沒有 session，按 Esc 退出');
+      message += this._logSection();
       this.screen.render(message, error ? chalk.red('>> ') + error : undefined);
       return;
     }
 
     message += '\n' + this._treePage();
+    message += this._logSection();
     this.screen.render(message, error ? chalk.red('>> ') + error : undefined);
   }
 
@@ -421,6 +427,7 @@ class TwoPhaseTreePrompt extends TreePrompt {
     message += '\n' + this._treePage();
     const cursor = chalk.bgWhite.black(' ');
     message += `\n\n  ${this._inputLabel}${chalk.cyan(this._inputBuffer)}${cursor}`;
+    message += this._logSection(true);
     this.screen.render(message);
   }
 
@@ -433,6 +440,7 @@ class TwoPhaseTreePrompt extends TreePrompt {
         ? chalk.bgCyan.black(`[${action}]`)
         : chalk.dim(` ${action} `);
     }).join(' ');
+    message += this._logSection(true);
 
     this.screen.render(message, error ? chalk.red('>> ') + error : undefined);
   }

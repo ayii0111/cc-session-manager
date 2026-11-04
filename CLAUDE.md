@@ -39,6 +39,7 @@ sh uninstall.sh   # 一鍵移除（指令、安裝檔、shell 整合區塊；不
 | `src/watcher.ts` | `ActiveSessionWatcher`：`fs.watch` + 3 秒 fallback 定時器，持續掃描 active sessions |
 | `src/operations.ts` | rename/delete/new/resume session 的實作；resume 會啟動 `claude -r <session_id>` 子進程 |
 | `src/tree-prompt.ts` | `TwoPhaseTreePrompt`：繼承 `inquirer-tree-prompt`，增加 action / confirm / input 三個 phase |
+| `src/screen.ts` | `OverwriteScreenManager`：取代 inquirer 先擦後畫的 `ScreenManager`，一次寫入、逐列覆蓋以避免閃爍 |
 | `src/format.ts` | 顯示格式化工具（相對時間、檔案大小、ANSI-aware 可見寬度）|
 | `src/types.ts` | `ProjectInfo`、`SessionInfo`、`TreeNodeValue` 型別定義 |
 
