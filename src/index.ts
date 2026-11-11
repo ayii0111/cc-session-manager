@@ -155,13 +155,13 @@ async function main() {
       getLogs: () => opLogs,
       actionsProvider: (node: any) =>
         node?.value?.type === 'dir'
-          ? ['新會話', '切換目錄', '刪除所有 sessions', '僅刪除 memory', '刪除目錄 (含 memory)']
+          ? ['新會話', '切換目錄', '刪除所有 sessions', '僅刪除 memory', '刪除 claude 專案 (含 memory)']
           : ['回到會話', '重命名', '刪除'],
       confirmActions: {
         '刪除': ['確定刪除', '取消'],
         '刪除所有 sessions': ['確定刪除', '取消'],
         '僅刪除 memory': ['確定刪除', '取消'],
-        '刪除目錄 (含 memory)': ['確定刪除', '取消'],
+        '刪除 claude 專案 (含 memory)': ['確定刪除', '取消'],
       },
       inputActions: ['重命名'],
       isActive: (sessionId: string) => watcher.getActive().has(sessionId),
@@ -210,11 +210,11 @@ async function main() {
           const existed = await ops.deleteMemory(nodeVal.project.cc_project_dir);
           addLog(existed ? `"${dirName}" 的 memory 已刪除` : `"${dirName}" 沒有 memory 可刪除`);
 
-        } else if (action === '刪除目錄 (含 memory)' && nodeVal.type === 'dir') {
+        } else if (action === '刪除 claude 專案 (含 memory)' && nodeVal.type === 'dir') {
           const dirName = projectDirName(nodeVal.project);
           await ops.deleteDirectory(nodeVal.project.cc_project_dir);
           treeData.splice(treeData.indexOf(treeNode), 1);
-          addLog(`"${dirName}" 目錄已刪除`);
+          addLog(`"${dirName}" 的 claude 專案已刪除`);
         }
         } catch (err: any) {
           addLog(`操作「${action}」失敗：${err?.message ?? err}`);
