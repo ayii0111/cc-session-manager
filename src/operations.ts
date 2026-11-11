@@ -39,6 +39,15 @@ export function newSession(original_project_dir: string): void {
   spawnAndHint([], original_project_dir);
 }
 
+/** 不啟動 claude，只讓 shell wrapper 在 sm 結束後 cd 到專案目錄 */
+export function changeDirectory(original_project_dir: string): void {
+  if (!isDirectory(original_project_dir)) {
+    console.error(`無法切換，目錄已不存在：${original_project_dir}`);
+    return;
+  }
+  writeCwd(original_project_dir);
+}
+
 export function resumeSession(
   session_id: string,
   original_project_dir: string,
@@ -108,6 +117,14 @@ export async function deleteAllSessions(cc_project_dir: string): Promise<void> {
       return deleteSession(cc_project_dir, session_id);
     }),
   );
+}
+
+/** 只刪除專案的 memory 目錄，回傳是否原本有 memory */
+export async function deleteMemory(cc_project_dir: string): Promise<boolean> {
+  const memoryDir = path.join(cc_project_dir, 'memory');
+  if (!isDirectory(memoryDir)) return false;
+  await fsp.rm(memoryDir, { recursive: true, force: true });
+  return true;
 }
 
 export async function deleteDirectory(cc_project_dir: string): Promise<void> {

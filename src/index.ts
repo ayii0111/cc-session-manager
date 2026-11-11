@@ -155,11 +155,12 @@ async function main() {
       getLogs: () => opLogs,
       actionsProvider: (node: any) =>
         node?.value?.type === 'dir'
-          ? ['新會話', '刪除所有 sessions', '刪除目錄 (含 memory)']
+          ? ['新會話', '切換目錄', '刪除所有 sessions', '僅刪除 memory', '刪除目錄 (含 memory)']
           : ['回到會話', '重命名', '刪除'],
       confirmActions: {
         '刪除': ['確定刪除', '取消'],
         '刪除所有 sessions': ['確定刪除', '取消'],
+        '僅刪除 memory': ['確定刪除', '取消'],
         '刪除目錄 (含 memory)': ['確定刪除', '取消'],
       },
       inputActions: ['重命名'],
@@ -204,6 +205,11 @@ async function main() {
           treeData.splice(treeData.indexOf(treeNode), 1);
           addLog(`"${dirName}" 所有 sessions 已刪除`);
 
+        } else if (action === '僅刪除 memory' && nodeVal.type === 'dir') {
+          const dirName = projectDirName(nodeVal.project);
+          const existed = await ops.deleteMemory(nodeVal.project.cc_project_dir);
+          addLog(existed ? `"${dirName}" 的 memory 已刪除` : `"${dirName}" 沒有 memory 可刪除`);
+
         } else if (action === '刪除目錄 (含 memory)' && nodeVal.type === 'dir') {
           const dirName = projectDirName(nodeVal.project);
           await ops.deleteDirectory(nodeVal.project.cc_project_dir);
@@ -221,7 +227,9 @@ async function main() {
       action: string;
     };
 
-    if (node.value.type === 'dir') {
+    if (node.value.type === 'dir' && action === '切換目錄') {
+      ops.changeDirectory(node.value.project.original_project_dir);
+    } else if (node.value.type === 'dir') {
       ops.newSession(node.value.project.original_project_dir);
     } else {
       const { session } = node.value;
