@@ -224,7 +224,11 @@ async function main() {
     if (node.value.type === 'dir') {
       ops.newSession(node.value.project.original_project_dir);
     } else {
-      ops.resumeSession(node.value.session.session_id, node.value.session.original_project_dir);
+      const { session } = node.value;
+      const knownProjectDirs = projectsWithSessions
+        .filter((p) => !p.project.path_missing)
+        .map((p) => p.project.original_project_dir);
+      ops.resumeSession(session.session_id, session.original_project_dir, session.cc_project_dir, knownProjectDirs);
     }
 
   } finally {

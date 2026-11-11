@@ -3,6 +3,7 @@ import * as fs from 'fs';
 import * as fsp from 'fs/promises';
 import * as path from 'path';
 import * as readline from 'readline';
+import { findRenamedDirs, findSameNameDirs } from './relocate';
 
 const CWD_FILE = '/tmp/sm-cwd';
 
@@ -38,7 +39,12 @@ export function newSession(original_project_dir: string): void {
   spawnAndHint([], original_project_dir);
 }
 
-export function resumeSession(session_id: string, original_project_dir: string): void {
+export function resumeSession(
+  session_id: string,
+  original_project_dir: string,
+  cc_project_dir: string,
+  knownProjectDirs: string[],
+): void {
   if (isDirectory(original_project_dir)) {
     spawnAndHint(['-r', session_id], original_project_dir);
     return;
@@ -46,8 +52,25 @@ export function resumeSession(session_id: string, original_project_dir: string):
 
   process.stdout.write(
     `\x1b[33m! 舊的專案目錄已不存在：${original_project_dir}\n` +
-    `  請儘快將此 session 搬移到正確的目錄：在 claude 內執行 /cd <正確路徑>\x1b[0m\n`,
+    `  請儘快將此 session 搬移到正確的目錄：在 claude 內執行 /cd <正確路徑>\x1b[0m\n` +
+    `\x1b[2m  搜尋專案的新位置中…\x1b[0m`,
   );
+  const listPaths = (paths: string[]) => paths.map((p) => `    \x1b[36m${p}\x1b[0m\n`).join('');
+  const oneOf = (paths: string[]) => (paths.length > 1 ? '以下其中之一' : '');
+  const moved = findSameNameDirs(original_project_dir);
+  const renamed = moved.length ? [] : findRenamedDirs(cc_project_dir, original_project_dir, knownProjectDirs);
+  process.stdout.write('\r\x1b[K');
+  if (moved.length) {
+    process.stdout.write(`  找到同名目錄，專案可能已搬移到${oneOf(moved)}：\n${listPaths(moved)}`);
+  } else if (renamed.length) {
+    process.stdout.write(
+      `  找不到同名目錄，但依此專案 session 用過的檔案比對，專案可能已重新命名為${oneOf(renamed)}：\n` +
+      listPaths(renamed),
+    );
+  } else {
+    process.stdout.write(`\x1b[2m  找不到同名目錄，也找不到檔案結構相符的目錄\x1b[0m\n`);
+  }
+  process.stdout.write('\n');
   const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
   rl.on('SIGINT', () => rl.close());
   rl.question('按 Enter 繼續進入此 session，Ctrl+C 取消：', () => {
