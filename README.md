@@ -1,17 +1,43 @@
-# Claude Code Session manager
+# cc-session-manager
 
-一個 TUI 工具，用來管理 [Claude Code](https://claude.com/claude-code) 的會話 (session)。
-在終端機裡瀏覽、切換、重命名、刪除各專案的 cc sessions，選定後直接接續對話，**離開時自動 `cd` 回該專案目錄**。
+**一個指令 `sm`，看見你所有專案的 Claude Code 對話，選一個直接接續。**
 
-## 功能
+`claude -r` 只列得出目前目錄的 session；專案一多，常常忘了「上次那段對話在哪個目錄、叫什麼名字」，`~/.claude` 裡的舊紀錄也越堆越多。
+`sm` 把所有專案的 session 整理成一棵樹：哪些還開著、多大、多久前聊過，一眼看清楚；選定後直接接續對話，**離開時還會自動 `cd` 回那個專案目錄**。
 
-- 📂 依專案目錄分組列出所有 cc sessions，顯示名稱、檔案大小、最後活動時間
-- 🟢 即時標示**進行中**的 session（`●`），並擋下對活躍 session 的刪除
-- ↩️ 選定 session → 啟動 `claude -r` 接續；選目錄 → 在該目錄開新會話
-- ✏️ 重命名 session（寫入 custom title）
-- 🗑️ 刪除單一 session / 整個目錄的所有 sessions / 連同目錄與 memory
-- 🖱️ 支援方向鍵與滑鼠點選
-- 📍 退出後自動 `cd` 回原專案目錄（透過 zsh 整合）
+![sm：所有專案的 session 一覽](docs/media/list.png)
+
+---
+
+## 特色
+
+### 1. 所有專案一覽，進行中的一眼看出
+
+- 依專案目錄分組，顯示 session 數量與最後活動時間，最近的在最上面
+- 展開目錄可以看到每段對話的名稱、檔案大小
+- 🟢 綠點表示**正在執行中**的 session（會實際檢查程序是否還活著，不會被 cc 崩潰後殘留的紀錄誤判）
+
+### 2. 選目錄：開新會話、切換目錄、清理舊紀錄
+
+選中一個專案按 `Enter`，可以在那個目錄開新會話、直接 `cd` 過去，或清掉不要的 sessions 和 memory。
+「刪除 claude 專案」只刪 `~/.claude/projects/` 底下的紀錄，**不會動到你的實際專案目錄**。
+
+![目錄操作](docs/media/dir-actions.png)
+
+### 3. 選 session：接續、重命名、刪除
+
+選中一段對話按 `Enter`，就會在原本的專案目錄用 `claude -r` 接續；也可以幫它取個好認的名字，或刪掉。
+正在執行中的 session 會擋下刪除；刪除類操作都要二次確認。
+
+![session 操作](docs/media/session-actions.png)
+
+### 其他
+
+- 🖱️ 方向鍵與滑鼠點選都能操作
+- 🔎 專案搬家或改名後，會自動搜尋新位置再接續
+- 📍 離開 `sm` 後，終端機自動停在剛才選的專案目錄
+
+---
 
 ## 安裝
 
